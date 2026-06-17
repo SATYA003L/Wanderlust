@@ -1,4 +1,7 @@
 const Listing = require("../models/listing");
+const mbxGeocoding = require('@mapbox/mapbox-sdk/services/geocoding');
+const mapToken = process.env.MAP_TOKEN;
+const geocodingClient = mbxGeocoding({ accessToken: process.env.MAP_TOKEN });
 
 module.exports.index= async (req,res)=>{
     const allListings= await Listing.find({});
@@ -8,29 +11,51 @@ module.exports.index= async (req,res)=>{
 module.exports.rendernewform =(req,res)=>{
    res.render("./listings/new.ejs");
     }
+module.exports.createlisting = async (req, res, next) => {
 
-module.exports.showlisting=async(req,res)=>{
-     let { id }= req.params;
-     const listing= await Listing.findById(id).populate({path:"reviews",populate :{path:"author"},}).populate("owner");
-     if(!listing){
-        req.flash("error","Listing Does Not Exist!!");
-        res.redirect("/listings");
-     }else{
-        res.render("./listings/show.ejs" ,{ listing });
-     }
-     
+    let response = await geocodingClient
+        .forwardGeocode({
+            query: req.body.listing.location,
+            limit: 1,
+        })
+        .send();
+
+    let url = req.file.path;
+    let filename = req.file.filename;
+
+    const newListing = new Listing(req.body.listing);
+
+    newListing.owner = req.user._id;
+    newListing.image = { url, filename };
+
+    // Mapbox geometry
+    newListing.geometry = response.body.features[0].geometry;
+
+    await newListing.save();
+
+    req.flash("success", "New Listing Created!!");
+    res.redirect("/listings");
 };
 
-module.exports.createlisting=async(req,res,next)=>{
-     let url =  req.file.path;
-     let filename = req.file.filename;
-     const newListing= new Listing(req.body.listing);
-     newListing.owner = req.user._id; //to save owner
-     newListing.image = { url , filename };
-     await newListing.save();
-     req.flash("success","New Listing Created!!");  // to get flash 
-     res.redirect("/listings"); 
+module.exports.showlisting = async (req, res) => {
+    let { id } = req.params;
+
+    const listing = await Listing.findById(id)
+        .populate({ path: "reviews", populate: { path: "author" } })
+        .populate("owner");
+
+    if (!listing) {
+        req.flash("error", "Listing Does Not Exist!!");
+        return res.redirect("/listings");
+    }
+
+    res.render("./listings/show.ejs", {
+        listing,
+        mapToken: process.env.MAP_TOKEN   // ✅ ADD THIS
+    });
 };
+
+
 module.exports.editlisting=async(req,res)=>{
     let {id}=req.params;
     const listing = await Listing.findById(id);

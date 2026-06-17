@@ -33,7 +33,7 @@ router.get("/:id",wrapAsync(listingcontroller.showlisting));
 //create route
 router.post("/",isloggedin,upload.single("listing[image]"),validateListing,wrapAsync(listingcontroller.createlisting)); 
 //edit route
-router.get("/:id/edit",isloggedin,isowner,validateListing, wrapAsync(listingcontroller.editlisting)); 
+router.get("/:id/edit",isloggedin,isowner, wrapAsync(listingcontroller.editlisting)); 
 
 //update route
 router.put("/:id", isloggedin,isowner,upload.single("listing[image]"), validateListing, wrapAsync(listingcontroller.updatelisting));

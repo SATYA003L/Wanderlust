@@ -19,6 +19,8 @@ const flash = require("connect-flash");
 const passport = require("passport");
 const LocalStrategy = require("passport-local");
 const User = require("./models/user.js");
+
+
 const dburl = process.env.ATLASDB_URL;
 
 app.set("view engine","ejs");
@@ -31,8 +33,11 @@ app.use(express.static(path.join(__dirname,"public")));
 
 main().then(res=>{console.log("connection successfull")}).catch(err => console.log(err));
 
+
+
 async function main() {
   await mongoose.connect(dburl);
+  console.log("Connected DB:", mongoose.connection.name);
 
 }
 
@@ -85,14 +90,15 @@ app.get("/",(req,res)=>{
 });
 // app.get("/demouser",async(req,res)=>{
 //   let fakeUser = new User({
-//     email:"stu@gmail.com",
-//     username: "hari",
+//     email:"aks@gmail.com",
+//     username: "satya",
 //   });
 //   let registereduser = await User.register(fakeUser,"hello"); //we use register method save user helloworld is password\
 //   console.log(registereduser);
 //   res.send("success");
   
 // });
+
 
 
 
